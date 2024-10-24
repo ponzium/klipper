@@ -6,7 +6,7 @@
 import logging, math
 import stepper
 
-class PolarKinematics:
+class PolarCoreKinematics:
     def __init__(self, toolhead, config):
         # Setup axis steppers
         stepper_bed = stepper.PrinterStepper(config.getsection('stepper_bed'),
@@ -114,4 +114,4 @@ class PolarKinematics:
         }
 
 def load_kinematics(toolhead, config):
-    return PolarKinematics(toolhead, config)
+    return PolarCoreKinematics(toolhead, config)
