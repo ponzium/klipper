@@ -1,9 +1,10 @@
+#i falta per revisar arxius config.cfg klippy/toolhead.py & klippy/chelper/kin_polar.c
+#
 ############
 # on progress...
 # Based on:
 # (polar, some idex, corexy, hybridcorexy)
 ############
-#
 # Code for handling the kinematics of the machine
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -37,24 +38,17 @@ class PolarCoreKinematics:
             'max_c_velocity', max_velocity, above=0., maxval=max_velocity)
         self.max_c_accel = config.getfloat(
             'max_c_accel', max_accel, above=0., maxval=max_accel)
-
-
-        ___________________________________________
-falta dir-li que no surti del carril  ab
-        __________________________________________
-
-
-i falta per revisar tot lo de baix, config.cfg klippy/toolhead.py & klippy/chelper/kin_polar.c
-
-
-
-    
+        #
+        ranges = [r.get_range() for r in self.rails]
+        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
+        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
+        #
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
-        bed_angle = stepper_positions[self.steppers[0].get_name()]
-        arm_pos = stepper_positions[self.rails[0].get_name()]
-        z_pos = stepper_positions[self.rails[1].get_name()]
+        a_pos = stepper_positions[self.steppers[0].get_name()]
+        b_pos = stepper_positions[self.rails[0].get_name()]
+        c_pos = stepper_positions[self.rails[1].get_name()]
         return [math.cos(bed_angle) * arm_pos, math.sin(bed_angle) * arm_pos,
                 z_pos]
     def set_position(self, newpos, homing_axes):
