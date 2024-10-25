@@ -1,6 +1,10 @@
-# Code for handling the kinematics of polar robots
+############
+# on progress...
+# Based on:
+# (polar, some idex, corexy, hybridcorexy)
+############
 #
-# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
+# Code for handling the kinematics of the machine
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
@@ -8,17 +12,20 @@ import stepper
 
 class PolarCoreKinematics:
     def __init__(self, toolhead, config):
-        # Setup axis steppers
-        stepper_bed = stepper.PrinterStepper(config.getsection('stepper_bed'),
-                                             units_in_radians=True)
-        rail_arm = stepper.PrinterRail(config.getsection('stepper_arm'))
-        rail_z = stepper.LookupMultiRail(config.getsection('stepper_z'))
-        stepper_bed.setup_itersolve('polar_stepper_alloc', b'a')
-        rail_arm.setup_itersolve('polar_stepper_alloc', b'r')
-        rail_z.setup_itersolve('cartesian_stepper_alloc', b'z')
-        self.rails = [rail_arm, rail_z]
-        self.steppers = [stepper_bed] + [ s for r in self.rails
+        self.printer = config.get_printer()
+        # Setup rail%stepper
+        stepper_a = stepper.LookupMultiRail(config.getsection('stepper_a')),
+        stepper_b = stepper.LookupMultiRail(config.getsection('stepper_b'))]
+        stepper_c = stepper.LookupMultiRail(config.getsection('stepper_c'))
+        #
+        stepper_a.setup_itersolve('polarcore_stepper_alloc', b'+')
+        stepper_b.setup_itersolve('polarcore_stepper_alloc', b'-')
+        stepper_c.setup_itersolve('polar_stepper_alloc', b'm')
+        #
+        self.rails = [stepper_a, stepper_b]
+        self.steppers = [stepper_c] + [ s for r in self.rails
                                           for s in r.get_steppers() ]
+        #
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
@@ -26,16 +33,22 @@ class PolarCoreKinematics:
                                                     self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_z_velocity = config.getfloat(
-            'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
-        self.max_z_accel = config.getfloat(
-            'max_z_accel', max_accel, above=0., maxval=max_accel)
-        self.limit_z = (1.0, -1.0)
-        self.limit_xy2 = -1.
-        max_xy = self.rails[0].get_range()[1]
-        min_z, max_z = self.rails[1].get_range()
-        self.axes_min = toolhead.Coord(-max_xy, -max_xy, min_z, 0.)
-        self.axes_max = toolhead.Coord(max_xy, max_xy, max_z, 0.)
+        self.max_c_velocity = config.getfloat(
+            'max_c_velocity', max_velocity, above=0., maxval=max_velocity)
+        self.max_c_accel = config.getfloat(
+            'max_c_accel', max_accel, above=0., maxval=max_accel)
+
+
+        ___________________________________________
+falta dir-li que no surti del carril  ab
+        __________________________________________
+
+
+i falta per revisar tot lo de baix, config.cfg klippy/toolhead.py & klippy/chelper/kin_polar.c
+
+
+
+    
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
