@@ -39,18 +39,21 @@ class PolarCoreKinematics:
         self.max_c_accel = config.getfloat(
             'max_c_accel', max_accel, above=0., maxval=max_accel)
         #
-        ranges = [r.get_range() for r in self.rails]
-        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
-        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
-        #
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
         a_pos = stepper_positions[self.steppers[0].get_name()]
         b_pos = stepper_positions[self.rails[0].get_name()]
         c_pos = stepper_positions[self.rails[1].get_name()]
-        return [math.cos(bed_angle) * arm_pos, math.sin(bed_angle) * arm_pos,
-                z_pos]
+        angle = math.atan2(a_pos, b_pos)
+        radi = a_pos*a_pos + b_pos*b_pos
+        radi = pow(radi, .5)
+        return [angle + radi, angle - radi, c_pos]
+
+_________________________________________________________
+_________________________________________________________
+
+
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)
@@ -58,6 +61,7 @@ class PolarCoreKinematics:
             self.limit_z = self.rails[1].get_range()
         if 0 in homing_axes and 1 in homing_axes:
             self.limit_xy2 = self.rails[0].get_range()[1]**2
+            
     def note_z_not_homed(self):
         # Helper for Safe Z Home
         self.limit_z = (1.0, -1.0)
